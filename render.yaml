@@ -23,7 +23,7 @@ services:
         sync: false
       - key: TURSO_AUTH_TOKEN
         sync: false
-      - key: BREVO_API_KEY
+      - key: MAIL_WEBHOOK_URL
         sync: false
-      - key: MAIL_FROM
+      - key: MAIL_WEBHOOK_SECRET
         sync: false

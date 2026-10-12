@@ -5,6 +5,17 @@ async function sendCode(to, code) {
   const html = `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8"><p>جامعة النجاح الوطنية — نظام الحضور الذكي</p><p>رمز التفعيل الخاص بك:</p><p style="font-size:32px;font-weight:bold;letter-spacing:6px">${code}</p><p>الرمز صالح لمدة 10 دقائق. إن لم تطلبه فتجاهل هذه الرسالة.</p></div>`;
   const from = process.env.MAIL_FROM;
 
+  if (process.env.MAIL_WEBHOOK_URL) { // Google Apps Script يرسل من Gmail عبر HTTPS (انظر mail-relay.gs)
+    const r = await fetch(process.env.MAIL_WEBHOOK_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'content-type': 'text/plain' },
+      body: JSON.stringify({ secret: process.env.MAIL_WEBHOOK_SECRET, to, subject, html }),
+    });
+    const t = await r.text();
+    let j; try { j = JSON.parse(t); } catch { throw new Error(`Mail relay ${r.status}: ${t.slice(0, 200)}`); }
+    if (!j.ok) throw new Error('Mail relay: ' + j.error);
+    return;
+  }
   if (process.env.BREVO_API_KEY) { // عبر HTTPS (لا يحتاج منافذ SMTP)
     if (!from) throw new Error('MAIL_FROM غير مضبوط');
     const r = await fetch('https://api.brevo.com/v3/smtp/email', {
