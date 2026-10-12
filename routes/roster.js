@@ -14,6 +14,23 @@ module.exports = (app, auth) => {
     res.json({ count: (await db.get('SELECT COUNT(*) AS n FROM course_students WHERE course_id = ?', c.id)).n });
   });
 
+  // عرض الطلاب المسجّلين في المادة مع عدد مرات حضورهم
+  app.get('/api/roster/students', auth('api'), async (req, res) => {
+    const c = await courseOf(req.user.teacher_id); if (!c) return res.sendStatus(404);
+    res.json(await db.all(
+      `SELECT s.id, s.full_name AS name, s.university_id AS universityId,
+        (SELECT COUNT(*) FROM attendance_records r JOIN attendance_sessions se ON se.id = r.session_id JOIN lectures l ON l.id = se.lecture_id
+         WHERE r.student_id = s.id AND l.course_id = cs.course_id AND r.status IN ('present', 'late')) AS attended
+       FROM course_students cs JOIN students s ON s.id = cs.student_id WHERE cs.course_id = ? ORDER BY s.full_name`, c.id));
+  });
+
+  // إزالة طالب من قائمة المادة (سجلات حضوره السابقة تبقى كما هي)
+  app.delete('/api/roster/students/:id', auth('api'), async (req, res) => {
+    const c = await courseOf(req.user.teacher_id); if (!c) return res.sendStatus(404);
+    const r = await db.run('DELETE FROM course_students WHERE course_id = ? AND student_id = ?', c.id, req.params.id);
+    r.changes ? res.json({ ok: true }) : res.status(404).json({ error: 'الطالب غير موجود في القائمة' });
+  });
+
   // رفع قائمة الطلاب: ملف Excel (.xlsx) أو CSV. يُقرأ الرقم الجامعي والاسم بصرف النظر عن ترتيب الأعمدة
   app.post('/api/roster', auth('api'), express.raw({ type: () => true, limit: '5mb' }), async (req, res) => {
     const c = await courseOf(req.user.teacher_id); if (!c) return res.sendStatus(404);
