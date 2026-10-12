@@ -88,10 +88,6 @@ module.exports = (app, auth) => {
     if (t.revoked || Date.parse(t.expires_at) <= Date.now())
       return res.status(410).json({ code: 'expired', error: 'انتهت صلاحية رمز الحضور', hint: 'يرجى مسح رمز QR الحالي الموجود على شاشة المحاضرة.' });
 
-    // إن رفع الدكتور قائمة طلاب للمادة فلا يُقبل إلا الرقم المسجّل فيها
-    const rosterUploaded = await db.get('SELECT 1 FROM settings WHERE key = ?', `roster_uploaded:${t.course_id}`);
-    if (rosterUploaded && !(await db.get('SELECT 1 FROM course_students cs JOIN students s ON s.id = cs.student_id WHERE cs.course_id = ? AND s.university_id = ?', t.course_id, uid)))
-      return res.status(403).json({ code: 'not_enrolled', error: 'الرقم الجامعي غير مسجّل في هذه المادة. تأكد من الرقم أو راجع الدكتور.' });
     const lateMin = Number(process.env.LATE_AFTER_MINUTES) || 0; // 0 = تعطيل التأخير التلقائي
     const status = lateMin > 0 && Date.now() - Date.parse(t.started_at) > lateMin * 60000 ? 'late' : 'present';
     const now = new Date().toISOString();

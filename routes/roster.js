@@ -39,8 +39,7 @@ module.exports = (app, auth) => {
       if (!id || !name) { skipped++; continue; }
       stmts.push([upsert, id, name.replace(/\s+/g, ' ').slice(0, 100)], [link, c.id, id]); added++;
     }
-    if (stmts.length) await db.batch([...stmts,
-      ["INSERT OR REPLACE INTO settings (key, value) VALUES (?, '1')", `roster_uploaded:${c.id}`]]); // من الآن يُقبل المسجّلون فقط
+    if (stmts.length) await db.batch(stmts);
     res.json({ ok: true, added, skipped });
   });
 };
