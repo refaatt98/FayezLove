@@ -1,21 +1,16 @@
-const Database = require('better-sqlite3');
+const { createClient } = require('@libsql/client');
 const fs = require('fs');
 const path = require('path');
-const file = process.env.DB_PATH || 'attendance.db';
-let db;
-try {
-  fs.mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
-  db = new Database(file);
-} catch (e) {
-  console.error('تعذّر فتح قاعدة البيانات في المسار:', file, '-', e.message);
-  console.error('إن كان المسار /data فتأكد أن القرص (Disk) مضاف على Render بمسار /data.');
-  process.exitCode = 1;
-  throw e;
-}
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
 
-db.exec(`
+// على الاستضافة: قاعدة Turso السحابية (TURSO_DATABASE_URL + TURSO_AUTH_TOKEN). محليًا: ملف SQLite عادي.
+const remote = process.env.TURSO_DATABASE_URL;
+const file = process.env.DB_PATH || 'attendance.db';
+if (!remote) fs.mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
+const client = createClient(remote
+  ? { url: remote, authToken: process.env.TURSO_AUTH_TOKEN }
+  : { url: 'file:' + path.resolve(file) });
+
+const SCHEMA = `
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY,
   username TEXT NOT NULL UNIQUE,
@@ -100,12 +95,26 @@ CREATE TRIGGER IF NOT EXISTS edit_logs_no_delete BEFORE DELETE ON attendance_edi
 BEGIN SELECT RAISE(ABORT, 'edit log is immutable'); END;
 CREATE TRIGGER IF NOT EXISTS edit_logs_no_update BEFORE UPDATE ON attendance_edit_logs
 BEGIN SELECT RAISE(ABORT, 'edit log is immutable'); END;
-`);
-db.getSecret = () => {
-  const r = db.prepare("SELECT value FROM settings WHERE key = 'jwt_secret'").get();
-  if (r) return r.value;
-  const v = require('crypto').randomBytes(48).toString('hex');
-  db.prepare("INSERT INTO settings (key, value) VALUES ('jwt_secret', ?)").run(v);
-  return v;
+`;
+
+const plain = (rs) => rs.rows.map((r) => Object.fromEntries(rs.columns.map((c, i) => [c, r[i]])));
+const meta = (rs) => ({ rows: plain(rs), lastInsertRowid: Number(rs.lastInsertRowid), changes: rs.rowsAffected });
+
+const db = {
+  all: async (sql, ...args) => plain(await client.execute({ sql, args })),
+  get: async (sql, ...args) => (await db.all(sql, ...args))[0],
+  run: async (sql, ...args) => meta(await client.execute({ sql, args })),
+  // عدة أوامر كوحدة واحدة (كلها أو لا شيء)
+  batch: async (stmts) => (await client.batch(stmts.map(([sql, ...args]) => ({ sql, args })), 'write')).map(meta),
+  async init() {
+    if (!remote) await client.execute('PRAGMA journal_mode = WAL');
+    await client.execute('PRAGMA foreign_keys = ON');
+    await client.executeMultiple(SCHEMA);
+  },
+  async getSecret() {
+    const v = require('crypto').randomBytes(48).toString('hex');
+    await db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('jwt_secret', ?)", v);
+    return (await db.get("SELECT value FROM settings WHERE key = 'jwt_secret'")).value;
+  },
 };
 module.exports = db;
