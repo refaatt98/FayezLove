@@ -16,9 +16,8 @@
 2. New ← **Blueprint** ← اختر مستودع `FayezLove` (يقرأ ملف `render.yaml` تلقائيًا وينشئ خدمة مجانية).
 3. سيطلب قيم المتغيرات السرّية:
    - `TURSO_DATABASE_URL` و`TURSO_AUTH_TOKEN` من الخطوة 1
-   - `BASE_URL` = رابط موقعك، مثل `https://smart-attendance.onrender.com` (يمكن تعديله بعد أول نشر حين تعرف الرابط الفعلي)
    - مفاتيح EmailJS (القسم 3)
-4. بعد أي تعديل على `BASE_URL` اضغط Manual Deploy.
+4. رابط QR يُبنى تلقائيًا من عنوان الموقع الذي يفتح منه الدكتور الشاشة، فلا يلزم ضبطه.
 
 ## 3) البريد — EmailJS (مجاني، 200 رسالة شهريًا، يرسل من Gmail)
 1. سجّل في https://www.emailjs.com

@@ -11,7 +11,7 @@ const cache = new Map(); // sessionId -> { raw, exp, image }  (الرمز الخ
 const AR = '٠١٢٣٤٥٦٧٨٩', FA = '۰۱۲۳۴۵۶۷۸۹';
 const normId = (s) => s.trim().replace(/[٠-٩۰-۹]/g, (d) => String(AR.includes(d) ? AR.indexOf(d) : FA.indexOf(d)));
 
-async function currentQr(sessionId) {
+async function currentQr(sessionId, origin) {
   const c = cache.get(sessionId);
   if (c && Date.parse(c.exp) > Date.now()) return c;
   const raw = crypto.randomBytes(24).toString('base64url');
@@ -20,7 +20,7 @@ async function currentQr(sessionId) {
     ['UPDATE qr_tokens SET revoked = 1 WHERE session_id = ? AND revoked = 0', sessionId], // القديم يبطل فورًا
     ['INSERT INTO qr_tokens (session_id, token_hash, expires_at) VALUES (?, ?, ?)', sessionId, sha(raw), exp],
   ]);
-  const url = `${process.env.BASE_URL || 'http://localhost:3000'}/a/${raw}`;
+  const url = `${origin}/a/${raw}`; // نفس عنوان الموقع الذي فتح منه الدكتور الشاشة
   const image = await QRCode.toDataURL(url, { errorCorrectionLevel: 'M', margin: 2, width: 720 });
   const entry = { raw, exp, image };
   cache.set(sessionId, entry);
@@ -49,7 +49,7 @@ module.exports = (app, auth) => {
   app.get('/api/lectures/current', auth('api'), async (req, res) => {
     const lec = await openFor(req.user.teacher_id);
     if (!lec) return res.json({ open: false });
-    const qr = await currentQr(lec.sid);
+    const qr = await currentQr(lec.sid, `${req.protocol}://${req.get('host')}`);
     const counts = Object.fromEntries((await db.all('SELECT status, COUNT(*) AS n FROM attendance_records WHERE session_id = ? GROUP BY status', lec.sid)).map((r) => [r.status, r.n]));
     res.json({ open: true, id: lec.id, number: lec.number, startedAt: lec.started_at, counts,
       qr: { image: qr.image, expiresAt: qr.exp }, serverNow: new Date().toISOString() });

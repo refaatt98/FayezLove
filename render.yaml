@@ -17,8 +17,6 @@ services:
         value: fayezghaith123@gmail.com
       - key: LATE_AFTER_MINUTES
         value: "0"
-      - key: BASE_URL
-        sync: false
       - key: TURSO_DATABASE_URL
         sync: false
       - key: TURSO_AUTH_TOKEN
