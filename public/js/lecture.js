@@ -1,3 +1,6 @@
 const lid = location.pathname.split('/')[2];
 mountRecords(lid, document.getElementById('tb'), document.getElementById('logs'), () => {});
 document.getElementById('h').textContent = 'محاضرة — تفاصيل الحضور';
+const exp = document.getElementById('exp');
+exp.innerHTML = `<div class="exp" style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><a href="/api/lectures/${lid}/export.xlsx" style="padding:10px 18px;min-height:40px;border-radius:6px;font:700 14px Cairo,sans-serif;text-decoration:none;display:inline-flex;align-items:center;color:#fff;background:#0B6B3A">تصدير Excel</a><a href="/api/lectures/${lid}/export.csv" style="padding:10px 18px;min-height:40px;border-radius:6px;font:700 14px Cairo,sans-serif;text-decoration:none;display:inline-flex;align-items:center;color:#fff;background:#14161a">تصدير CSV</a><a href="/report?type=lecture&id=${lid}" style="padding:10px 18px;min-height:40px;border-radius:6px;font:700 14px Cairo,sans-serif;text-decoration:none;display:inline-flex;align-items:center;color:#fff;background:#C8102E">تصدير PDF</a></div>`;
+fetch(`/api/lectures/${lid}/report`).then((r) => r.json()).then((d) => { document.getElementById('h').textContent = `محاضرة ${d.number} — ${d.date}`; });

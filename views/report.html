@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تقرير الحضور</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Cairo,sans-serif;background:#FAF8F3;color:#14161a}
+.bar{height:8px;background:linear-gradient(90deg,#C8102E 0 10%,#14161a 10% 40%,#fff 40% 60%,#0B6B3A 60%);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+main{max-width:900px;margin:0 auto;padding:28px 24px;background:#fff}
+.tools{max-width:900px;margin:16px auto 0;padding:0 24px;display:flex;gap:10px;flex-wrap:wrap}
+.tools button,.tools a{padding:10px 20px;min-height:44px;border:0;border-radius:6px;font:700 15px Cairo;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+#print{background:#C8102E;color:#fff}.back{background:#fff;border:1px solid #14161a!important;color:#14161a}
+.uni{color:#0B6B3A;font-weight:700}h1{margin:4px 0;font-size:24px}h2{margin:0 0 4px;font-size:18px}.meta{color:#5b5f66;font-size:14px}
+.sum{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0;font-size:14px}.sum b{font-size:18px}
+table{width:100%;border-collapse:collapse;text-align:right;font-size:14px;margin-top:10px}th,td{padding:7px 8px;border:1px solid #d9d4c9}
+th{background:#0B6B3A;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}tr:nth-child(even) td{background:#FAF8F3;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.foot{margin-top:18px;color:#9a968c;font-size:12px;display:flex;justify-content:space-between}
+@media print{.tools{display:none}body{background:#fff}main{padding:0;max-width:none}@page{size:A4;margin:14mm}thead{display:table-header-group}tr{break-inside:avoid}}
+</style></head><body><div class="bar"></div>
+<div class="tools"><button id="print">حفظ PDF / طباعة</button><a class="back" id="back" href="/dashboard">رجوع</a></div>
+<main><div class="uni" id="uni"></div><h1 id="course"></h1><div class="meta" id="teacher"></div>
+<h2 id="title" style="margin-top:16px"></h2><div class="meta" id="sub"></div><div class="sum" id="sum"></div>
+<table><thead id="th"></thead><tbody id="tb"></tbody></table>
+<div class="foot"><span id="gen"></span><span>نظام الحضور الذكي</span></div></main>
+<script src="/js/session.js"></script><script src="/js/report.js"></script></body></html>

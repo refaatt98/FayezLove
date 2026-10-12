@@ -55,6 +55,7 @@ app.get('/lectures/:id', auth('page'), page('views/lecture.html'));
 app.get('/stats', auth('page'), page('views/stats.html'));
 app.get('/roster', auth('page'), page('views/roster.html'));
 app.get('/display', auth('page'), page('views/display.html'));
+app.get('/report', auth('page'), page('views/report.html'));
 require('./routes/attendance')(app, auth);
 require('./routes/records')(app, auth);
 require('./routes/reports')(app, auth);
