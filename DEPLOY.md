@@ -17,10 +17,22 @@
 3. سيطلب قيم المتغيرات السرّية:
    - `TURSO_DATABASE_URL` و`TURSO_AUTH_TOKEN` من الخطوة 1
    - `BASE_URL` = رابط موقعك، مثل `https://smart-attendance.onrender.com` (يمكن تعديله بعد أول نشر حين تعرف الرابط الفعلي)
-   - `MAIL_WEBHOOK_URL` و`MAIL_WEBHOOK_SECRET` (القسم 3)
+   - مفاتيح EmailJS (القسم 3)
 4. بعد أي تعديل على `BASE_URL` اضغط Manual Deploy.
 
-## 3) البريد — Gmail عبر Google Apps Script (مجاني، 100 رسالة يوميًا)
+## 3) البريد — EmailJS (مجاني، 200 رسالة شهريًا، يرسل من Gmail)
+1. سجّل في https://www.emailjs.com
+2. **Email Services ← Add New Service ← Gmail ← Connect Account** واختر حساب Gmail المرسِل ← Create Service. انسخ **Service ID**.
+3. **Email Templates ← Create New Template**:
+   - Subject: `{{subject}}`
+   - Content: `رمز التفعيل الخاص بك: {{code}} — صالح لمدة 10 دقائق.`
+   - في الجهة اليمنى: To Email = `{{to_email}}`
+   احفظ وانسخ **Template ID**.
+4. **Account ← General**: انسخ **Public Key** و**Private Key**.
+5. **Account ← Security**: فعّل **Allow EmailJS API for non-browser applications** واحفظ (ضروري).
+6. على Render ← Environment أضف: `EMAILJS_SERVICE_ID`, `EMAILJS_TEMPLATE_ID`, `EMAILJS_PUBLIC_KEY`, `EMAILJS_PRIVATE_KEY` ثم Save, rebuild, and deploy.
+
+### بديل: Gmail عبر Google Apps Script (100 رسالة يوميًا)
 الرموز تُرسل من حساب Gmail الخاص بك عبر HTTPS (Render المجاني يحجب SMTP).
 1. افتح https://script.google.com وأنت داخل على حساب Gmail المرسِل ← **New project**.
 2. احذف المحتوى والصق محتوى الملف `mail-relay.gs` من المستودع.

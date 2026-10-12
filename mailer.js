@@ -5,6 +5,18 @@ async function sendCode(to, code) {
   const html = `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8"><p>جامعة النجاح الوطنية — نظام الحضور الذكي</p><p>رمز التفعيل الخاص بك:</p><p style="font-size:32px;font-weight:bold;letter-spacing:6px">${code}</p><p>الرمز صالح لمدة 10 دقائق. إن لم تطلبه فتجاهل هذه الرسالة.</p></div>`;
   const from = process.env.MAIL_FROM;
 
+  if (process.env.EMAILJS_SERVICE_ID) { // EmailJS عبر HTTPS (يرسل من Gmail المربوط في حسابهم)
+    const r = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        service_id: process.env.EMAILJS_SERVICE_ID, template_id: process.env.EMAILJS_TEMPLATE_ID,
+        user_id: process.env.EMAILJS_PUBLIC_KEY, accessToken: process.env.EMAILJS_PRIVATE_KEY,
+        template_params: { to_email: to, code, subject },
+      }),
+    });
+    if (!r.ok) throw new Error(`EmailJS ${r.status}: ${(await r.text()).slice(0, 200)}`);
+    return;
+  }
   if (process.env.MAIL_WEBHOOK_URL) { // Google Apps Script يرسل من Gmail عبر HTTPS (انظر mail-relay.gs)
     const r = await fetch(process.env.MAIL_WEBHOOK_URL, {
       method: 'POST', redirect: 'follow',
