@@ -1,8 +1,13 @@
 const nodemailer = require('nodemailer');
+const fs = require('fs');
+const path = require('path');
+
+// نفس القالب يُلصق في EmailJS (انظر DEPLOY.md) ويُستخدم هنا لبقية المزوّدين
+const TEMPLATE = fs.readFileSync(path.join(__dirname, 'templates', 'verify-email.html'), 'utf8');
 
 async function sendCode(to, code) {
   const subject = 'رمز تفعيل حسابك — نظام الحضور الذكي';
-  const html = `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8"><p>جامعة النجاح الوطنية — نظام الحضور الذكي</p><p>رمز التفعيل الخاص بك:</p><p style="font-size:32px;font-weight:bold;letter-spacing:6px">${code}</p><p>الرمز صالح لمدة 10 دقائق. إن لم تطلبه فتجاهل هذه الرسالة.</p></div>`;
+  const html = TEMPLATE.replace(/\{\{code\}\}/g, code).replace(/\{\{to_email\}\}/g, to);
   const from = process.env.MAIL_FROM;
 
   if (process.env.EMAILJS_SERVICE_ID) { // EmailJS عبر HTTPS (يرسل من Gmail المربوط في حسابهم)

@@ -25,7 +25,7 @@
 2. **Email Services ← Add New Service ← Gmail ← Connect Account** واختر حساب Gmail المرسِل ← Create Service. انسخ **Service ID**.
 3. **Email Templates ← Create New Template**:
    - Subject: `{{subject}}`
-   - Content: `رمز التفعيل الخاص بك: {{code}} — صالح لمدة 10 دقائق.`
+   - Content: اضغط **Edit Content ← Code Editor** والصق محتوى الملف `templates/verify-email.html` من المستودع.
    - في الجهة اليمنى: To Email = `{{to_email}}`
    احفظ وانسخ **Template ID**.
 4. **Account ← General**: انسخ **Public Key** و**Private Key**.
