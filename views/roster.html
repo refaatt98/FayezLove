@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>قائمة الطلاب</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
+<style>body{margin:0;font-family:Cairo,sans-serif;background:#FAF8F3;color:#14161a}.bar{height:8px;background:linear-gradient(90deg,#C8102E 0 10%,#14161a 10% 40%,#fff 40% 60%,#0B6B3A 60%)}
+main{max-width:640px;margin:0 auto;padding:32px 24px;display:flex;flex-direction:column;gap:18px}a{color:#0B6B3A;font-weight:700}
+.card{background:#fff;border:1px solid #E3DFD6;border-top:4px solid #0B6B3A;padding:24px;display:flex;flex-direction:column;gap:14px}
+button{padding:12px 24px;min-height:44px;background:#0B6B3A;color:#fff;border:0;border-radius:6px;font:700 16px Cairo;cursor:pointer}</style></head>
+<body><div class="bar"></div><main><a href="/dashboard">← لوحة التحكم</a><h1 style="margin:0">قائمة طلاب المادة</h1>
+<div class="card"><div>عدد الطلاب المسجّلين: <b id="n">—</b></div>
+<p style="margin:0;color:#5b5f66;line-height:1.7">ارفع ملف Excel (.xlsx) أو CSV يحتوي الاسم والرقم الجامعي (بأي ترتيب للأعمدة). بعد رفع القائمة لا يُقبل إلا الأرقام المسجّلة فيها، ويُحتسب الغياب من أول محاضرة.</p>
+<label for="f" style="font-weight:700">اختر الملف</label><input id="f" type="file" accept=".xlsx,.csv,.txt"><button id="up">رفع القائمة</button><div id="msg" role="status" style="font-weight:700"></div></div>
+</main><script src="/js/roster.js"></script></body></html>

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>الإحصائيات والتقارير</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Cairo,sans-serif;background:#FAF8F3;color:#14161a}.bar{height:8px;background:linear-gradient(90deg,#C8102E 0 10%,#14161a 10% 40%,#fff 40% 60%,#0B6B3A 60%)}
+main{max-width:1000px;margin:0 auto;padding:32px 24px;display:flex;flex-direction:column;gap:20px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}.c{background:#fff;border:1px solid #E3DFD6;padding:16px}.c b{display:block;font-size:34px}
+table{width:100%;border-collapse:collapse;text-align:right;background:#fff}th,td{padding:10px;border-bottom:1px solid #E3DFD6}
+.btn{padding:10px 20px;min-height:44px;border:0;border-radius:6px;color:#fff;font:700 15px Cairo;text-decoration:none;display:inline-flex;align-items:center;cursor:pointer}a.back{color:#0B6B3A;font-weight:700}
+@media print{.noprint{display:none!important}body{background:#fff}}
+</style></head><body><div class="bar"></div><main>
+<a class="back noprint" href="/dashboard">← لوحة التحكم</a>
+<div><div id="uni" style="color:#0B6B3A;font-weight:700"></div><h1 id="course" style="margin:0"></h1><div id="teacher"></div></div>
+<div class="cards"><div class="c">عدد المحاضرات<b id="n"></b></div><div class="c">إجمالي الطلاب<b id="s"></b></div><div class="c">متوسط الحضور<b id="a"></b></div></div>
+<div class="noprint" style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" style="background:#0B6B3A" href="/api/export.xlsx">Excel</a><a class="btn" style="background:#14161a" href="/api/export.csv">CSV</a><button class="btn" style="background:#C8102E" onclick="window.print()">PDF (طباعة / حفظ كـ PDF)</button></div>
+<div style="overflow-x:auto"><table><thead><tr><th>الطالب</th><th>الرقم الجامعي</th><th>الحضور</th><th>الغياب</th><th>التأخير</th><th>بعذر</th><th>النسبة</th></tr></thead><tbody id="tb"></tbody></table></div>
+</main><script src="/js/stats.js"></script></body></html>

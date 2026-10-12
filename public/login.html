@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تسجيل دخول الدكتور</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Cairo,sans-serif;background:#FAF8F3;color:#14161a;min-height:100vh;display:flex;flex-direction:column}
+.bar{height:8px;background:linear-gradient(90deg,#C8102E 0 10%,#14161a 10% 40%,#fff 40% 60%,#0B6B3A 60%)}
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;background:repeating-linear-gradient(45deg,rgba(20,22,26,.04) 0 2px,transparent 2px 14px),repeating-linear-gradient(-45deg,rgba(20,22,26,.04) 0 2px,transparent 2px 14px)}
+.box{width:100%;max-width:420px;background:#fff;border:1px solid #E3DFD6;border-top:4px solid #0B6B3A;padding:36px 32px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px}
+form{display:flex;flex-direction:column;gap:18px}h1{margin:4px 0 0;font-size:26px;font-weight:800;text-align:center}.u{color:#0B6B3A;font-weight:700;text-align:center}
+label{font-weight:700;display:block;margin-bottom:8px}
+input{width:100%;box-sizing:border-box;height:48px;padding:0 14px;border:1px solid #9a968c;border-radius:6px;font:16px Cairo}
+button.p{height:52px;background:#14161a;color:#fff;border:0;border-radius:6px;font:800 17px Cairo;cursor:pointer}
+button.l{background:none;border:0;color:#0B6B3A;font:700 15px Cairo;cursor:pointer;padding:4px}
+#err{min-height:1.4em;text-align:center;font-weight:700;color:#C8102E}#err.ok{color:#0B6B3A}.n{color:#5b5f66;font-size:14px;line-height:1.7;margin:0}[hidden]{display:none!important}
+</style></head><body><div class="bar"></div><main><div class="box">
+<div><div class="u">جامعة النجاح الوطنية</div><h1>نظام الحضور الذكي</h1></div>
+
+<form id="v-login">
+<div><label for="e1">البريد الإلكتروني</label><input id="e1" type="email" autocomplete="username" required></div>
+<div><label for="p1">كلمة المرور</label><input id="p1" type="password" autocomplete="current-password" required></div>
+<button class="p">تسجيل الدخول</button>
+<button type="button" class="l" id="to-act">تفعيل الحساب / نسيت كلمة المرور</button>
+</form>
+
+<form id="v-req" hidden>
+<p class="n">اكتب بريد الجامعة الخاص بالدكتور، وسيصله رمز تفعيل من 6 أرقام.</p>
+<div><label for="e2">البريد الإلكتروني</label><input id="e2" type="email" required></div>
+<button class="p">إرسال رمز التفعيل</button>
+<button type="button" class="l" data-back>رجوع</button>
+</form>
+
+<form id="v-ver" hidden>
+<p class="n">أدخل الرمز الذي وصل إلى بريدك، ثم اختر كلمة مرور جديدة (10 أحرف على الأقل).</p>
+<div><label for="c">رمز التفعيل</label><input id="c" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required></div>
+<div><label for="p2">كلمة المرور الجديدة</label><input id="p2" type="password" autocomplete="new-password" minlength="10" required></div>
+<div><label for="p3">تأكيد كلمة المرور</label><input id="p3" type="password" autocomplete="new-password" minlength="10" required></div>
+<button class="p">تفعيل الحساب والدخول</button>
+<button type="button" class="l" data-back>رجوع</button>
+</form>
+<div id="err" role="alert"></div>
+</div></main>
+<footer style="text-align:center;padding:20px;color:#5b5f66;font:14px Cairo,sans-serif;border-top:1px solid #E3DFD6;background:#FAF8F3">تصميم: <a href="https://www.instagram.com/fayezghaith/" target="_blank" rel="noopener" style="color:#0B6B3A;font-weight:700;text-decoration:none">Fayez Ghaith</a> · <a href="https://www.instagram.com/fayezghaith/" target="_blank" rel="noopener" style="color:#0B6B3A;text-decoration:none">@fayezghaith</a></footer>
+<script src="/js/login.js"></script></body></html>
