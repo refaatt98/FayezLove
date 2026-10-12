@@ -24,7 +24,7 @@ async function sendCode(to, code) {
     await t.sendMail({ from: from || process.env.SMTP_USER, to, subject, html });
     return;
   }
-  if (process.env.NODE_ENV !== 'production') { console.log(`[DEV] رمز التفعيل لـ ${to}: ${code}`); return; }
-  throw new Error('لم يُضبط أي مزوّد بريد (BREVO_API_KEY أو SMTP_HOST)');
+  // بلا مزوّد بريد: يُطبع الرمز في سجلات الخادم (Logs) ولا يراها إلا صاحب حساب الاستضافة
+  console.log(`[CODE] رمز التفعيل لـ ${to}: ${code}`);
 }
 module.exports = { sendCode };
