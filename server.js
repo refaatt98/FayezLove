@@ -61,6 +61,7 @@ require('./routes/records')(app, auth);
 require('./routes/reports')(app, auth);
 require('./routes/roster')(app, auth);
 app.use('/js', express.static(path.join(__dirname, 'public/js')));
+app.use('/img', express.static(path.join(__dirname, 'public/img'), { maxAge: '7d' }));
 
 // أي خطأ غير متوقع في القاعدة يرجع 500 بدل أن يُسقط الخادم
 app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: 'خطأ في الخادم' }); });
