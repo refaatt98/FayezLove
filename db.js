@@ -91,7 +91,10 @@ CREATE TABLE IF NOT EXISTS auth_codes (
 );
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 -- السجل دائم: لا حذف ولا تعديل
-CREATE TRIGGER IF NOT EXISTS edit_logs_no_delete BEFORE DELETE ON attendance_edit_logs
+-- الاستثناء الوحيد: حذف محاضرة كاملة بطلب الدكتور (يُفعَّل مؤقتًا داخل نفس العملية)
+DROP TRIGGER IF EXISTS edit_logs_no_delete;
+CREATE TRIGGER edit_logs_no_delete BEFORE DELETE ON attendance_edit_logs
+WHEN NOT EXISTS (SELECT 1 FROM settings WHERE key = 'allow_lecture_delete')
 BEGIN SELECT RAISE(ABORT, 'edit log is immutable'); END;
 CREATE TRIGGER IF NOT EXISTS edit_logs_no_update BEFORE UPDATE ON attendance_edit_logs
 BEGIN SELECT RAISE(ABORT, 'edit log is immutable'); END;

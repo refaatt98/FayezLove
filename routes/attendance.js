@@ -71,6 +71,29 @@ module.exports = (app, auth) => {
     res.json({ ok: true });
   });
 
+  // حذف محاضرة بكل سجلاتها، ثم إعادة ترقيم ما بعدها حتى يبقى الترقيم متسلسلًا
+  app.delete('/api/lectures/:id', auth('api'), async (req, res) => {
+    const lec = await db.get(
+      `SELECT l.id, l.number, l.course_id, s.id AS sid FROM lectures l JOIN courses c ON c.id = l.course_id
+       JOIN attendance_sessions s ON s.lecture_id = l.id WHERE l.id = ? AND c.teacher_id = ?`, req.params.id, req.user.teacher_id);
+    if (!lec) return res.status(404).json({ error: 'المحاضرة غير موجودة' });
+    await db.batch([
+      ["INSERT OR REPLACE INTO settings (key, value) VALUES ('allow_lecture_delete', '1')"],
+      ['DELETE FROM attendance_edit_logs WHERE record_id IN (SELECT id FROM attendance_records WHERE session_id = ?)', lec.sid],
+      ["DELETE FROM settings WHERE key = 'allow_lecture_delete'"],
+      ['DELETE FROM attendance_records WHERE session_id = ?', lec.sid],
+      ['DELETE FROM qr_tokens WHERE session_id = ?', lec.sid],
+      ['DELETE FROM attendance_sessions WHERE id = ?', lec.sid],
+      ['DELETE FROM lectures WHERE id = ?', lec.id],
+      // على خطوتين لتجنّب تعارض الترقيم الفريد أثناء التحديث
+      ['UPDATE lectures SET number = -(number - 1) WHERE course_id = ? AND number > ?', lec.course_id, lec.number],
+      ['UPDATE lectures SET number = -number WHERE course_id = ? AND number < 0', lec.course_id],
+    ]);
+    cache.delete(lec.sid);
+    bus.emit('change', lec.sid);
+    res.json({ ok: true });
+  });
+
   // عام: لا يحتاج حساب. كل التحققات في الخادم.
   const limiter = rateLimit({ windowMs: 60 * 1000, max: 600, standardHeaders: true, legacyHeaders: false });
   app.post('/api/attend', limiter, async (req, res) => {
