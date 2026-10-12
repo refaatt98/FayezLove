@@ -24,11 +24,13 @@ module.exports = (app, auth) => {
        FROM course_students cs JOIN students s ON s.id = cs.student_id WHERE cs.course_id = ? ORDER BY s.full_name`, c.id));
   });
 
-  // إزالة طالب من قائمة المادة (سجلات حضوره السابقة تبقى كما هي)
-  app.delete('/api/roster/students/:id', auth('api'), async (req, res) => {
+  // إزالة طالب أو عدة طلاب من قائمة المادة (سجلات حضورهم السابقة تبقى كما هي)
+  app.post('/api/roster/students/delete', auth('api'), express.json({ limit: '200kb' }), async (req, res) => {
     const c = await courseOf(req.user.teacher_id); if (!c) return res.sendStatus(404);
-    const r = await db.run('DELETE FROM course_students WHERE course_id = ? AND student_id = ?', c.id, req.params.id);
-    r.changes ? res.json({ ok: true }) : res.status(404).json({ error: 'الطالب غير موجود في القائمة' });
+    const ids = Array.isArray(req.body && req.body.ids) ? req.body.ids.map(Number).filter(Number.isInteger) : [];
+    if (!ids.length) return res.status(400).json({ error: 'لم يتم تحديد أي طالب' });
+    await db.batch(ids.map((id) => ['DELETE FROM course_students WHERE course_id = ? AND student_id = ?', c.id, id]));
+    res.json({ ok: true, removed: ids.length });
   });
 
   // رفع قائمة الطلاب: ملف Excel (.xlsx) أو CSV. يُقرأ الرقم الجامعي والاسم بصرف النظر عن ترتيب الأعمدة
