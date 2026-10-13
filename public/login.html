@@ -10,7 +10,7 @@ main{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;
 form{display:flex;flex-direction:column;gap:18px}h1{margin:4px 0 0;font-size:26px;font-weight:800;text-align:center}.u{color:#0B6B3A;font-weight:700;text-align:center}
 label{font-weight:700;display:block;margin-bottom:8px}
 input{width:100%;box-sizing:border-box;height:48px;padding:0 14px;border:1px solid #9a968c;border-radius:6px;font:16px Cairo}
-button.p{height:52px;background:#14161a;color:#fff;border:0;border-radius:6px;font:800 17px Cairo;cursor:pointer}
+button.p{height:52px;background:#14161a;color:#fff;border:0;border-radius:6px;font:800 17px Cairo;cursor:pointer}button.p:disabled{opacity:.65;cursor:wait}
 button.l{background:none;border:0;color:#0B6B3A;font:700 15px Cairo;cursor:pointer;padding:4px}
 #err{min-height:1.4em;text-align:center;font-weight:700;color:#C8102E}#err.ok{color:#0B6B3A}.n{color:#5b5f66;font-size:14px;line-height:1.7;margin:0}[hidden]{display:none!important}
 </style></head><body><div class="bar"></div><main><div class="box">
@@ -24,9 +24,10 @@ button.l{background:none;border:0;color:#0B6B3A;font:700 15px Cairo;cursor:point
 </form>
 
 <form id="v-req" hidden>
-<p class="n">اكتب بريد الجامعة الخاص بالدكتور، وسيصله رمز تفعيل من 6 أرقام.</p>
+<p class="n">اكتب بريدك الإلكتروني وسيصلك رمز من 6 أرقام لتفعيل الحساب أو لتعيين كلمة مرور جديدة.</p>
 <div><label for="e2">البريد الإلكتروني</label><input id="e2" type="email" required></div>
 <button class="p">إرسال رمز التفعيل</button>
+<button type="button" class="l" id="have-code">وصلني رمز بالفعل؟ أدخله هنا</button>
 <button type="button" class="l" data-back>رجوع</button>
 </form>
 

@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
+const pass = require('../password');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const db = require('../db');
@@ -41,7 +41,8 @@ module.exports = (app, { auth, SECRET, PROD, DOCTOR }) => {
   // 2) التفعيل: الرمز + كلمة المرور الجديدة (يصلح أيضًا لنسيان كلمة المرور)
   app.post('/api/auth/activate', limiter, async (req, res) => {
     const b = req.body || {};
-    const email = norm(b.email), code = String(b.code || '').trim(), pw = b.password;
+    const email = norm(b.email), pw = b.password;
+    const code = String(b.code || '').replace(/[٠-٩]/g, (d) => d.charCodeAt(0) - 0x660).replace(/[۰-۹]/g, (d) => d.charCodeAt(0) - 0x6f0).replace(/\D/g, '');
     if (typeof pw !== 'string' || pw.trim().length < 10 || pw.length > 128) return res.status(400).json({ error: 'كلمة المرور يجب أن تكون 10 أحرف على الأقل' });
     const u = await account(email);
     if (!u) return res.status(403).json({ code: 'not_allowed', error: NOT_ALLOWED });
@@ -53,7 +54,7 @@ module.exports = (app, { auth, SECRET, PROD, DOCTOR }) => {
       return res.status(400).json({ error: 'الرمز غير صحيح' });
     }
     await db.batch([
-      ['UPDATE users SET password_hash = ? WHERE id = ?', await bcrypt.hash(pw.trim(), 12), u.id], // تُحفظ في القاعدة على الخادم
+      ['UPDATE users SET password_hash = ? WHERE id = ?', await pass.hash(pw.trim()), u.id], // تُحفظ في القاعدة على الخادم
       ['DELETE FROM auth_codes WHERE email = ?', email],
     ]);
     signIn(res, u.id);
@@ -69,8 +70,11 @@ module.exports = (app, { auth, SECRET, PROD, DOCTOR }) => {
     if (!u) return res.status(403).json({ code: 'not_allowed', error: NOT_ALLOWED });
     if (!u.password_hash) return res.status(403).json({ code: 'not_activated', error: 'لم يتم تفعيل الحساب بعد. سيصلك رمز على بريدك لتختار كلمة مرور.' });
     // مسافة زائدة من لوحة مفاتيح الجوال في أول أو آخر كلمة المرور لا تمنع الدخول
-    const ok = await bcrypt.compare(b.password, u.password_hash) || await bcrypt.compare(b.password.trim(), u.password_hash);
+    const pw = b.password, trimmed = pw.trim();
+    const ok = await pass.verify(pw, u.password_hash) || (trimmed !== pw && await pass.verify(trimmed, u.password_hash));
     if (!ok) return res.status(401).json({ code: 'bad_password', error: 'كلمة المرور غير صحيحة. إن نسيتها اضغط "تفعيل الحساب / نسيت كلمة المرور".' });
+    // كلمات المرور القديمة (bcrypt) تُحوَّل للتشفير الأسرع بعد أول دخول ناجح
+    if (pass.isLegacy(u.password_hash)) await db.run('UPDATE users SET password_hash = ? WHERE id = ?', await pass.hash(trimmed || pw), u.id);
     signIn(res, u.id);
     res.json({ ok: true });
   });
