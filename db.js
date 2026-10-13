@@ -113,6 +113,9 @@ const db = {
     if (!remote) await client.execute('PRAGMA journal_mode = WAL');
     await client.execute('PRAGMA foreign_keys = ON');
     await client.executeMultiple(SCHEMA);
+    // الحسابات المسموحة تُحفظ في القاعدة (active = 1) بدل متغيرات البيئة
+    if (!(await db.all('PRAGMA table_info(users)')).some((c) => c.name === 'active'))
+      await client.execute('ALTER TABLE users ADD COLUMN active INTEGER NOT NULL DEFAULT 1');
   },
   async getSecret() {
     const v = require('crypto').randomBytes(48).toString('hex');

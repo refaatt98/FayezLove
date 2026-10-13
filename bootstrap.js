@@ -5,7 +5,9 @@ module.exports = async (db) => {
   const primary = lc(process.env.DOCTOR_EMAIL || 'abuhijleh@najah.edu');
   const extra = (process.env.EXTRA_ALLOWED_EMAILS || 'fayezghaith123@gmail.com').split(',').map(lc).filter(Boolean);
   const allowed = [...new Set([primary, ...extra])];
-  await db.batch(allowed.map((e) => ["INSERT OR IGNORE INTO users (username, email, password_hash) VALUES (?, ?, '')", e, e]));
+  // تُضاف مرة واحدة فقط ولا تُحذف: إدارة الحسابات بعدها من صفحة "الحسابات" داخل الموقع
+  await db.batch([...allowed.map((e) => ["INSERT OR IGNORE INTO users (username, email, password_hash) VALUES (?, ?, '')", e, e]),
+    ['UPDATE users SET active = 1 WHERE email = ?', primary]]);
   const uid = (await db.get('SELECT id FROM users WHERE email = ?', primary)).id;
   if (!(await db.get('SELECT 1 FROM teachers WHERE user_id = ?', uid))) {
     await db.batch([
@@ -13,5 +15,5 @@ module.exports = async (db) => {
       ['INSERT INTO courses (teacher_id, name, semester) VALUES (last_insert_rowid(), ?, ?)', 'دراسات فلسطينية', 'خريف 2026'],
     ]);
   }
-  return { primary, allowed };
+  return { primary };
 };

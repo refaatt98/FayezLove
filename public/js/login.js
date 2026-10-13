@@ -13,7 +13,8 @@ $('v-login').onsubmit = async (e) => {
   e.preventDefault(); msg('');
   const r = await post('/api/login', { email: $('e1').value, password: $('p1').value });
   if (r.ok) location.href = '/dashboard';
-  else { msg(r.d.error || 'حدث خطأ'); if (r.d.code === 'not_activated') { $('e2').value = $('e1').value; show('v-req'); msg(r.d.error); } }
+  else if (r.d.code === 'not_activated') { $('e2').value = $('e1').value; show('v-req'); msg(r.d.error); }
+  else msg(r.d.error || 'حدث خطأ، حاول مرة أخرى');
 };
 $('v-req').onsubmit = async (e) => {
   e.preventDefault(); msg('');
