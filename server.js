@@ -7,6 +7,8 @@ const jwt = require('jsonwebtoken');
 const db = require('./db');
 
 (async () => {
+try { await db.get('SELECT 1'); console.log('database: connected'); }
+catch (e) { console.error('database: connection failed -', e.message); throw e; }
 await db.init();
 const { primary: DOCTOR } = await require('./bootstrap')(db);
 
