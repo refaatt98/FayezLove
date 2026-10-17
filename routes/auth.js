@@ -6,10 +6,10 @@ const db = require('../db');
 const { sendCode } = require('../mailer');
 
 const SESSION_DAYS = 30;
-const NOT_ALLOWED = 'هذا البريد غير مسموح له بالدخول. يمكن إضافته من صفحة "الحسابات" داخل لوحة التحكم.';
+const NOT_ALLOWED = 'هذا البريد غير مسموح له بالتسجيل أو الدخول إلى هذا النظام.';
 
 module.exports = (app, { auth, SECRET, PROD, DOCTOR }) => {
-  const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false,
+  const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: Number(process.env.AUTH_RATE_LIMIT) || 30, standardHeaders: true, legacyHeaders: false,
     message: { error: 'محاولات كثيرة، حاول بعد ربع ساعة' } });
   const norm = (e) => (typeof e === 'string' ? e.trim().toLowerCase() : '');
   const hashCode = (email, code) => crypto.createHmac('sha256', SECRET).update(email + ':' + code).digest('hex');
@@ -27,7 +27,8 @@ module.exports = (app, { auth, SECRET, PROD, DOCTOR }) => {
     const prev = await db.get('SELECT created_at FROM auth_codes WHERE email = ?', email);
     if (prev && Date.now() - Date.parse(prev.created_at) < 60000) return res.status(429).json({ error: 'انتظر دقيقة قبل طلب رمز جديد. الرمز السابق ما زال صالحًا.' });
     const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
-    await db.run('INSERT OR REPLACE INTO auth_codes (email, code_hash, expires_at, attempts, created_at) VALUES (?, ?, ?, 0, ?)',
+    await db.run(`INSERT INTO auth_codes (email, code_hash, expires_at, attempts, created_at) VALUES (?, ?, ?, 0, ?)
+      ON CONFLICT (email) DO UPDATE SET code_hash = EXCLUDED.code_hash, expires_at = EXCLUDED.expires_at, attempts = 0, created_at = EXCLUDED.created_at`,
       email, hashCode(email, code), new Date(Date.now() + 10 * 60000).toISOString(), new Date().toISOString());
     try { await sendCode(email, code); }
     catch (e) {
@@ -82,27 +83,4 @@ module.exports = (app, { auth, SECRET, PROD, DOCTOR }) => {
   app.post('/api/logout', (req, res) => { res.clearCookie('token', { sameSite: 'lax', secure: PROD }); res.json({ ok: true }); });
   app.get('/api/me', auth('api'), (req, res) => res.json({ name: req.user.full_name, email: req.user.email }));
 
-  // إدارة الحسابات المسموحة (تُحفظ في القاعدة وتبقى دائمًا)
-  const list = () => db.all("SELECT id, email, password_hash != '' AS activated FROM users WHERE active = 1 ORDER BY id");
-  app.get('/api/accounts', auth('api'), async (req, res) => {
-    res.json((await list()).map((a) => ({ ...a, activated: !!a.activated, primary: a.email === DOCTOR, me: a.id === req.user.id })));
-  });
-  app.post('/api/accounts', auth('api'), async (req, res) => {
-    const email = norm(req.body && req.body.email);
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) return res.status(400).json({ error: 'البريد الإلكتروني غير صالح' });
-    await db.batch([
-      ["INSERT OR IGNORE INTO users (username, email, password_hash) VALUES (?, ?, '')", email, email],
-      ['UPDATE users SET active = 1 WHERE email = ?', email],
-    ]);
-    res.json({ ok: true });
-  });
-  app.delete('/api/accounts/:id', auth('api'), async (req, res) => {
-    const a = await db.get('SELECT id, email FROM users WHERE id = ? AND active = 1', req.params.id);
-    if (!a) return res.status(404).json({ error: 'الحساب غير موجود' });
-    if (a.email === DOCTOR) return res.status(400).json({ error: 'لا يمكن حذف حساب الدكتور' });
-    if (a.id === req.user.id) return res.status(400).json({ error: 'لا يمكنك حذف حسابك وأنت داخل به' });
-    // يُعطَّل ويُمسح سرّه؛ إن أُضيف لاحقًا يفعّل نفسه من جديد
-    await db.run("UPDATE users SET active = 0, password_hash = '' WHERE id = ?", a.id);
-    res.json({ ok: true });
-  });
 };

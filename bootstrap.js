@@ -1,19 +1,20 @@
-// يجهّز الحسابات المسموحة تلقائيًا (بلا كلمات مرور). كل مستخدم يفعّل حسابه بنفسه عبر رمز يصل لبريده.
-// الحساب الأساسي (الدكتور) يملك المادة والمحاضرات؛ الحسابات الإضافية تدخل إلى لوحة الدكتور نفسها.
+// الحسابان الوحيدان المسموح لهما بالتسجيل والدخول. أي بريد آخر يُرفض دائمًا.
+// الحساب الأساسي (الدكتور) يملك المادة والمحاضرات؛ الحساب الثاني يدخل إلى لوحة الدكتور نفسها.
+const DOCTOR = 'abuhijleh@najah.edu';
+const ALLOWED = [DOCTOR, 'fayezghaith123@gmail.com'];
+
 module.exports = async (db) => {
-  const lc = (s) => String(s).trim().toLowerCase();
-  const primary = lc(process.env.DOCTOR_EMAIL || 'abuhijleh@najah.edu');
-  const extra = (process.env.EXTRA_ALLOWED_EMAILS || 'fayezghaith123@gmail.com').split(',').map(lc).filter(Boolean);
-  const allowed = [...new Set([primary, ...extra])];
-  // تُضاف مرة واحدة فقط ولا تُحذف: إدارة الحسابات بعدها من صفحة "الحسابات" داخل الموقع
-  await db.batch([...allowed.map((e) => ["INSERT OR IGNORE INTO users (username, email, password_hash) VALUES (?, ?, '')", e, e]),
-    ['UPDATE users SET active = 1 WHERE email = ?', primary]]);
-  const uid = (await db.get('SELECT id FROM users WHERE email = ?', primary)).id;
+  await db.batch([
+    ...ALLOWED.map((e) => ["INSERT INTO users (username, email, password_hash) VALUES (?, ?, '') ON CONFLICT DO NOTHING", e, e]),
+    // لا تُمسّ كلمات المرور المحفوظة؛ فقط يُعطَّل أي حساب خارج القائمة
+    ['UPDATE users SET active = CASE WHEN email = ANY(?::text[]) THEN 1 ELSE 0 END', ALLOWED],
+  ]);
+  const uid = (await db.get('SELECT id FROM users WHERE email = ?', DOCTOR)).id;
   if (!(await db.get('SELECT 1 FROM teachers WHERE user_id = ?', uid))) {
     await db.batch([
       ['INSERT INTO teachers (user_id, full_name) VALUES (?, ?)', uid, 'د. سائد أبو حجلة'],
-      ['INSERT INTO courses (teacher_id, name, semester) VALUES (last_insert_rowid(), ?, ?)', 'دراسات فلسطينية', 'خريف 2026'],
+      ["INSERT INTO courses (teacher_id, name, semester) VALUES (currval(pg_get_serial_sequence('teachers', 'id')), ?, ?)", 'دراسات فلسطينية', 'خريف 2026'],
     ]);
   }
-  return { primary };
+  return { primary: DOCTOR };
 };

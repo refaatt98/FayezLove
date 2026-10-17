@@ -18,7 +18,7 @@ module.exports = (app, auth) => {
   app.get('/api/roster/students', auth('api'), async (req, res) => {
     const c = await courseOf(req.user.teacher_id); if (!c) return res.sendStatus(404);
     res.json(await db.all(
-      `SELECT s.id, s.full_name AS name, s.university_id AS universityId,
+      `SELECT s.id, s.full_name AS name, s.university_id AS "universityId",
         (SELECT COUNT(*) FROM attendance_records r JOIN attendance_sessions se ON se.id = r.session_id JOIN lectures l ON l.id = se.lecture_id
          WHERE r.student_id = s.id AND l.course_id = cs.course_id AND r.status IN ('present', 'late')) AS attended
        FROM course_students cs JOIN students s ON s.id = cs.student_id WHERE cs.course_id = ? ORDER BY s.full_name`, c.id));
@@ -50,7 +50,7 @@ module.exports = (app, auth) => {
 
     let added = 0, skipped = 0;
     const upsert = 'INSERT INTO students (university_id, full_name) VALUES (?, ?) ON CONFLICT(university_id) DO UPDATE SET full_name = excluded.full_name';
-    const link = 'INSERT OR IGNORE INTO course_students (course_id, student_id) SELECT ?, id FROM students WHERE university_id = ?';
+    const link = 'INSERT INTO course_students (course_id, student_id) SELECT ?::int, id FROM students WHERE university_id = ? ON CONFLICT DO NOTHING';
     const stmts = [];
     for (const cells of rows) {
       const id = cells.map(normId).find((x) => /^\d{4,12}$/.test(x));

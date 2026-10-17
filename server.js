@@ -62,7 +62,6 @@ app.get('/stats', auth('page'), page('views/stats.html'));
 app.get('/roster', auth('page'), page('views/roster.html'));
 app.get('/display', auth('page'), page('views/display.html'));
 app.get('/report', auth('page'), page('views/report.html'));
-app.get('/accounts', auth('page'), page('views/accounts.html'));
 require('./routes/attendance')(app, auth);
 require('./routes/records')(app, auth);
 require('./routes/reports')(app, auth);
@@ -71,7 +70,10 @@ app.use('/js', express.static(path.join(__dirname, 'public/js')));
 app.use('/img', express.static(path.join(__dirname, 'public/img'), { maxAge: '7d' }));
 
 // أي خطأ غير متوقع في القاعدة يرجع 500 بدل أن يُسقط الخادم
-app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: 'خطأ في الخادم' }); });
+app.use((err, req, res, next) => {
+  if (err.code === '22P02') return res.status(400).json({ error: 'طلب غير صالح' }); // رقم غير صالح في الرابط
+  console.error(err); res.status(500).json({ error: 'خطأ في الخادم' });
+});
 
 app.listen(process.env.PORT || 3000, () => console.log('running'));
 })().catch((e) => { console.error('فشل التشغيل:', e); process.exit(1); });

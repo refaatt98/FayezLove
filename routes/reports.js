@@ -15,7 +15,8 @@ async function build(teacherId) {
   const total = (await db.get(`SELECT COUNT(*) AS n FROM lectures l JOIN attendance_sessions s ON s.lecture_id = l.id
     WHERE l.course_id = ? AND s.is_open = 0`, course.id)).n;
   const raw = await db.all(`SELECT st.full_name AS name, st.university_id AS uid,
-      SUM(r.status = 'present') AS present, SUM(r.status = 'late') AS late, SUM(r.status = 'excused') AS excused
+      COUNT(*) FILTER (WHERE r.status = 'present') AS present, COUNT(*) FILTER (WHERE r.status = 'late') AS late,
+      COUNT(*) FILTER (WHERE r.status = 'excused') AS excused
     FROM students st JOIN attendance_records r ON r.student_id = st.id
     JOIN attendance_sessions s ON s.id = r.session_id JOIN lectures l ON l.id = s.lecture_id
     WHERE l.course_id = ? AND s.is_open = 0 GROUP BY st.id ORDER BY st.full_name`, course.id);
@@ -116,7 +117,7 @@ module.exports = (app, auth) => {
       LEFT JOIN course_students cs ON cs.student_id = st.id AND cs.course_id = ?
       LEFT JOIN attendance_records r ON r.student_id = st.id
       WHERE cs.course_id IS NOT NULL OR r.session_id IN (SELECT s.id FROM attendance_sessions s JOIN lectures l ON l.id = s.lecture_id WHERE l.course_id = ?)
-      ORDER BY st.full_name`, d.course.id, d.course.id);
+      ORDER BY name`, d.course.id, d.course.id);
     const at = new Map(recs.map((r) => [`${r.stid}:${r.sid}`, r.status]));
     const matrix = { name: 'جدول الحضور', head: ['اسم الطالب', 'الرقم الجامعي', ...lectures.map((l) => `م${l.number} (${day(l.started_at)})`), 'عدد مرات الحضور'],
       widths: [26, 14, ...lectures.map(() => 14), 16],

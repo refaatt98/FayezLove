@@ -20,7 +20,7 @@ module.exports = (app, auth) => {
     const s = await owned(req.params.id, req.user.teacher_id);
     if (!s) return res.status(404).json({ error: 'غير موجودة' });
     const rows = await db.all(
-      `SELECT r.id, st.full_name AS name, st.university_id AS universityId, r.checked_in_at AS checkedInAt, r.status
+      `SELECT r.id, st.full_name AS name, st.university_id AS "universityId", r.checked_in_at AS "checkedInAt", r.status
        FROM attendance_records r JOIN students st ON st.id = r.student_id
        WHERE r.session_id = ? ORDER BY r.checked_in_at IS NULL, r.checked_in_at DESC, st.full_name`, s.id);
     const counts = {}; rows.forEach((r) => { counts[r.status] = (counts[r.status] || 0) + 1; });
@@ -31,7 +31,7 @@ module.exports = (app, auth) => {
     const s = await owned(req.params.id, req.user.teacher_id);
     if (!s) return res.status(404).json({ error: 'غير موجودة' });
     res.json(await db.all(
-      `SELECT st.full_name AS student, g.old_status AS oldStatus, g.new_status AS newStatus, COALESCE(t.full_name, eu.email) AS editor, g.edited_at AS at
+      `SELECT st.full_name AS student, g.old_status AS "oldStatus", g.new_status AS "newStatus", COALESCE(t.full_name, eu.email) AS editor, g.edited_at AS at
        FROM attendance_edit_logs g JOIN attendance_records r ON r.id = g.record_id JOIN students st ON st.id = r.student_id
        JOIN users eu ON eu.id = g.edited_by LEFT JOIN teachers t ON t.user_id = eu.id WHERE r.session_id = ? ORDER BY g.id DESC`, s.id));
   });

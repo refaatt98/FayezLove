@@ -39,9 +39,9 @@ module.exports = (app, auth) => {
     if (!course) return res.status(400).json({ error: 'لا توجد مادة' });
     const now = new Date().toISOString();
     const [lec] = await db.batch([
-      ['INSERT INTO lectures (course_id, number, lecture_date, started_at) SELECT ?, COALESCE(MAX(number), 0) + 1, ?, ? FROM lectures WHERE course_id = ?',
+      ['INSERT INTO lectures (course_id, number, lecture_date, started_at) SELECT ?::int, COALESCE(MAX(number), 0) + 1, ?::text, ?::text FROM lectures WHERE course_id = ? RETURNING id',
         course.id, now.slice(0, 10), now, course.id],
-      ['INSERT INTO attendance_sessions (lecture_id) VALUES (last_insert_rowid())'],
+      ["INSERT INTO attendance_sessions (lecture_id) VALUES (currval(pg_get_serial_sequence('lectures', 'id')))"],
     ]);
     res.json({ ok: true, id: lec.lastInsertRowid });
   });
@@ -64,7 +64,7 @@ module.exports = (app, auth) => {
       ['UPDATE qr_tokens SET revoked = 1 WHERE session_id = ?', lec.sid],
       ['UPDATE lectures SET ended_at = ? WHERE id = ?', now, lec.id],
       // من لم يسجّل حضوره يصبح غائبًا (من الطلاب المعروفين في النظام) ويمكن للدكتور تعديله
-      ["INSERT INTO attendance_records (session_id, student_id, status) SELECT ?, cs.student_id, 'absent' FROM course_students cs WHERE cs.course_id = (SELECT course_id FROM lectures WHERE id = ?) AND cs.student_id NOT IN (SELECT student_id FROM attendance_records WHERE session_id = ?)", lec.sid, lec.id, lec.sid],
+      ["INSERT INTO attendance_records (session_id, student_id, status) SELECT ?::int, cs.student_id, 'absent' FROM course_students cs WHERE cs.course_id = (SELECT course_id FROM lectures WHERE id = ?) AND cs.student_id NOT IN (SELECT student_id FROM attendance_records WHERE session_id = ?)", lec.sid, lec.id, lec.sid],
     ]);
     cache.delete(lec.sid);
     bus.emit('change', lec.sid);
@@ -78,7 +78,7 @@ module.exports = (app, auth) => {
        JOIN attendance_sessions s ON s.lecture_id = l.id WHERE l.id = ? AND c.teacher_id = ?`, req.params.id, req.user.teacher_id);
     if (!lec) return res.status(404).json({ error: 'المحاضرة غير موجودة' });
     await db.batch([
-      ["INSERT OR REPLACE INTO settings (key, value) VALUES ('allow_lecture_delete', '1')"],
+      ["INSERT INTO settings (key, value) VALUES ('allow_lecture_delete', '1') ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"],
       ['DELETE FROM attendance_edit_logs WHERE record_id IN (SELECT id FROM attendance_records WHERE session_id = ?)', lec.sid],
       ["DELETE FROM settings WHERE key = 'allow_lecture_delete'"],
       ['DELETE FROM attendance_records WHERE session_id = ?', lec.sid],
@@ -116,16 +116,16 @@ module.exports = (app, auth) => {
     const now = new Date().toISOString();
     try {
       const r = await db.batch([
-        ['INSERT OR IGNORE INTO students (university_id, full_name) VALUES (?, ?)', uid, fullName],
-        ['INSERT OR IGNORE INTO course_students (course_id, student_id) SELECT ?, id FROM students WHERE university_id = ?', t.course_id, uid],
-        ['INSERT INTO attendance_records (session_id, student_id, status, checked_in_at) SELECT ?, id, ?, ? FROM students WHERE university_id = ?', t.sid, status, now, uid],
+        ['INSERT INTO students (university_id, full_name) VALUES (?, ?) ON CONFLICT DO NOTHING', uid, fullName],
+        ['INSERT INTO course_students (course_id, student_id) SELECT ?::int, id FROM students WHERE university_id = ? ON CONFLICT DO NOTHING', t.course_id, uid],
+        ['INSERT INTO attendance_records (session_id, student_id, status, checked_in_at) SELECT ?::int, id, ?::text, ?::text FROM students WHERE university_id = ?', t.sid, status, now, uid],
         ['SELECT full_name FROM students WHERE university_id = ?', uid],
       ]);
       const out = r[3].rows[0];
       bus.emit('change', t.sid);
       res.json({ ok: true, name: out.full_name, universityId: uid, time: now });
     } catch (e) {
-      if (/SQLITE_CONSTRAINT/.test(`${e.code} ${e.message}`)) return res.status(409).json({ code: 'duplicate', error: 'تم تسجيل حضورك مسبقًا في هذه المحاضرة.' });
+      if (e.code === '23505') return res.status(409).json({ code: 'duplicate', error: 'تم تسجيل حضورك مسبقًا في هذه المحاضرة.' });
       throw e;
     }
   });

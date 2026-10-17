@@ -11,15 +11,9 @@ services:
         value: production
       - key: NODE_VERSION
         value: "20"
-      - key: DOCTOR_EMAIL
-        value: abuhijleh@najah.edu
-      - key: EXTRA_ALLOWED_EMAILS
-        value: fayezghaith123@gmail.com
       - key: LATE_AFTER_MINUTES
         value: "0"
-      - key: TURSO_DATABASE_URL
-        sync: false
-      - key: TURSO_AUTH_TOKEN
+      - key: DATABASE_URL
         sync: false
       - key: EMAILJS_SERVICE_ID
         sync: false
