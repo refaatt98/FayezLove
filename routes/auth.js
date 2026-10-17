@@ -5,7 +5,7 @@ const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { sendCode } = require('../mailer');
 
-const SESSION_DAYS = 30;
+const SESSION_DAYS = 365; // سنة كاملة: لا يُطلب الدخول من جديد على نفس الجهاز
 const NOT_ALLOWED = 'هذا البريد غير مسموح له بالتسجيل أو الدخول إلى هذا النظام.';
 
 module.exports = (app, { auth, SECRET, PROD, DOCTOR }) => {
@@ -14,7 +14,7 @@ module.exports = (app, { auth, SECRET, PROD, DOCTOR }) => {
   const norm = (e) => (typeof e === 'string' ? e.trim().toLowerCase() : '');
   const hashCode = (email, code) => crypto.createHmac('sha256', SECRET).update(email + ':' + code).digest('hex');
   const account = (email) => db.get('SELECT id, password_hash FROM users WHERE email = ? AND active = 1', email);
-  // الجلسة تبقى 30 يومًا. lax حتى تبقى مسجّلًا عند فتح الرابط من واتساب أو إنستغرام
+  // الجلسة تبقى سنة. lax حتى تبقى مسجّلًا عند فتح الرابط من واتساب أو إنستغرام
   const signIn = (res, uid) => {
     res.cookie('token', jwt.sign({ uid }, SECRET, { expiresIn: `${SESSION_DAYS}d` }),
       { httpOnly: true, sameSite: 'lax', secure: PROD, maxAge: SESSION_DAYS * 86400 * 1000 });
